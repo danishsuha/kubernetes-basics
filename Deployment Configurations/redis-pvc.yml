@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim           # PersistentVolumeClaim is the configuration 
+metadata:
+  name: redis-pvc
+spec:
+  storageClass: ""                    # Not associating this PVC to a Storage Class
+  accessModes:
+  - ReadWriteOnce                     # Matching the Access Mode to the PV we created so it can claim that PV
+  resources:                          # The resources this PVC is looking for
+    requests:
+      storage: 1Gi                    # Requesting 1GI of storage

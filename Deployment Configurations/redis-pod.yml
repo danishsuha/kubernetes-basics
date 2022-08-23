@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod                         # Creating a Pod config
+metadata:                   
+  name: redis-pod                 # Naming the pod config
+spec:
+  containers:
+  - image: redis                  # Using the redis image
+    name: redis-pod               # Calling our pod redis-pod
+    volumeMounts:                 # Choosing where our volume will be mounted in the container
+    - name: redis-data            
+      mountPath: /data            # /data is where the volume will be mounted in our container
+    ports:
+    - containerPort: 6379         # Choosing the container port of 6379
+      protocol: TCP               # TCP protocol
+  volumes:                        # Associating volume data with our pod
+  - name: redis-data        
+    persistentVolumeClaim:        # Attaching a PVC to our Pod
+      claimName: redis-pvc        # Pointig it our PVC so that it can pick up the PV bound to our PVC 

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+      - containerPort: 80
+    resources:
+      limits:
+        cpu: 100m
+        memory: 240Mi
+      requests:
+        cpu: 50m
+        memory: 120Mi
+  nodeSelector:               # This is a specification that can allow you to map a pod directly to a specific node using
+    env: dev                  # labels (key/value pairs). If the node has those selected labels, it will be where the pod is 
+    node: nginx-nodes         # created.
+
+# nodeName: nginx-nodes       # You can also use the nodeName parameter to specifically choose a node where to create your pod
+  
+      

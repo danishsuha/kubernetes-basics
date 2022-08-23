@@ -1,0 +1,150 @@
+KUBECTL COMMANDS
+
+-- kubeadm-command --
+kubeadm init --pod-network-cidr=10.244.0.0/16   # This initializes your cluster and will provide some additional
+                                                # steps to take to secure your cluster and k8 network
+
+kubeadm upgrade plan                            # Plan the upgrade of your k8 componenets (API Server, scheduler, controller-manager, kubeproxy, coreDNS, etcd)
+kubeadm upgrade apply version_number            # The kubeadm plan will give you a command to upgrade the componenets with the version, and with minimal downtime
+
+
+--  other-k8-commands  --
+
+kubectl cluster-info                # Gives info on the cluser [cluster master IP and DNS info]
+kubectl get events                  # Shows the events that have taken place in the cluster [includes deployment of pods, their srevices, and other componenets]
+kubectl create namespace NAME       # Will create a k8 namespace
+kubectl get namespace               # Will show all namespaces
+kubectl apply                       # apply is a 'declaritive' approach, declaring the state of your k8 cluster
+kubcetl create                      # create is more of an 'imperative' approach, simply stating what components you want to create
+kubcetl replace                     # This will update a componenet in the k8 cluster
+kubectl delete RESOURCE RESOURCE_NAME   # Will delete pod if you replace RESOURCE with pod and RESOURCE_NAME with the pod name; and the same for other k8 componenets
+kubectl log nginx-pod -n my-namespace   # This will show the logs of a pod that is either in CrashLoopback or Failed
+kubectl get all --all-namespace     # Shows all componenets
+kubectl get svc,po,deploy -n my-namespace   #This will show ur services, pods, and deployments in the my-namespace namespace
+
+
+--  k8-commands-for-nodes  --
+
+kubectl get node                    # Gets all the nodes in the cluster
+kubectl describe node               # Provides detailed output of all nodes
+kubectl describe node NODE_NAME     # Provides detailed output of a specific node
+kubectl get node --show-labels      # Shows all the labels associated to each node (this way we can assign a pod to a specific node)
+kubectl taint nodes NODE_NAME env=prod:NoSchedule   # This will taint the node and will tolerate any pods deployed with those tolerations matching the node taint, will be deployed only in that node
+
+
+--  k8-commands-for-pods  --
+
+kubectl get pod 
+kubectl get pod -o wide                 # Gives a bit more output on the pods
+kubectl get pod --all-namespaces        # Shows all pods that exist from all the namespaces
+kubectl describe pod                    # Provides great detail about your pods
+kubectl describe pod POD_NAME           # Provides great detail about a specific pod
+kubectl log pod POD_NAME                # Shows logs related to that pod
+kubectl exec -it POD_NAME -- [Command1] # Allows you to execute a command within that containter
+kubectl exec -it POD_NAME /bin/bash     # Uses the bash shell and connects into the container so tht you can run commands, edit files, or naviagte within the container
+kubectl port-forward POD_NAME 8080:80   # This will port forward the container port 80 to the local port 8080
+
+
+--  k8-commands-for-deployments  --
+
+kubectl create deployment nginx-deployment --image=nginx    # Will create a basic deployment of an nginx pod
+kubectl run nginx --image=nginx
+kubectl apply -f deployment.yml                             # Applies a deployment configuration to your cluster
+kubectl get deployment                                      # Get a list of your deployments in your default namespace
+kubectl get deployment -n my-namespace                      # Get a list of deployments in the my-namespace namespace
+kubectl get deployment -o yaml                              # Shows your deployments in YAML
+kubectl get deployment DEPLOYMENT_NAME -o yaml              # Shows a specific deployment in YAML                 
+kubectl edit deployment DEPLOYMENT_NAME -n my-namespace     # Allows you to edit a specific deployment within a namespace
+kubectl scale deployment DEPLOYMENT_NAME --replicas=4       # Sets the replica count for a specific deployment to 4 [you can do 'kubectl get pods' to verify the changes]      
+kubectl describe deployment DEPLOYMENT_NAME                 # Describes a specific deployment
+kubectl port-forward DEPLOYMENT_NAME 8080:80                # This will port forward the container ports 80 to the local port 8080
+kubcetl rollout status deployments DEPLOYMENT_NAME          # Will provide live status of your deployment rollout
+kubectl set image deployments/DEPLOYMENT_NAME nginx=nginx:alpine    # This will update all containers a part of the deployment mentinoed and change the image to nginx:alpine with no downtime
+kubectl rollout undo deployment/DEPLOYMENT_NAME             # This will roll you back to a previous version/revision
+kubcetl rollout history deployments/DEPLOYMENT_NAME         # Will show all the rollout history including the previous revisions
+kubectl rollout history deployments/DEPLOYMENT_NAME --revision=4    #View details of a specific rollout revision
+
+
+--  k8-commands-for-services  --
+
+kubectl apply -f service.yml                                    # Applies a specific service configuration
+kubectl get svc                                                 # Get a list of all srevices
+kubectl get svc -n my-namespace                                 # Get a list of services in a specific namespace
+kubectl get svc -o yaml                                         # Show your services in YAML
+kubectl describe svc SERVICE_NAME                               # Describes a specific service
+kubectl port-forward SERVICE_NAME 8080:80                       # This will port forward the container ports 80 to the local port 8080
+kubectl expose deployment nginx --port=8080 --target-port=80    # Creates a service for the pods associated to the deployment called nginx, which listens on port 8080 and targets the containers port 80
+kubectl expose pod my-pod --port=8080 --target-port= 80 --name=frontend     # Creates a service, called frontend, for a pod called my-pod, listening on port 8080 and targeting container port 80
+kubectl expose deployment nginx --port=80 --type=Node Port      # This will create an external service from the nginx deployment, which will expose a port on the Nodes where the pod is running. You can access container with the IP/DNS of the Node and the NodePort. Ex: 127.23.156.19:30678
+kubectl create service clusterip my-cs --tcp=8080:80            # Creats a ClusterIP service, called my-cs, that will listen on port 8080 and target container port 80
+
+
+--  k8-commands-for-persistent-volumes  --
+
+kubectl apply -f my-pv.yml                  # Apply persistent volume configuration
+kubectl get pv -n my-namespace              # Get the list of PVs in your namespace  
+kubectl describe pv                         # Describe your PVs
+kubectly describe pv my-pv                  # Describe a specific PV 
+* same commands for pvc *       ex: kubectl get pvc -n my-namespace (this will show my pv claims in my namespace)
+* same commands for pvc *       ex: kubectl apply -f redis-pvc.yml  (this will apply this configuration and it will be bound to the PV that matches its requirements)
+
+
+--  k8-commands-for-cluster-roles  --
+
+kubectl create clusterrole ROLE_NAME --verb=get,list --resource=persistentvolumes,services,pods     # This will create a Cluster Role with the name ROLE_NAME, and it will have the get and list 
+                                                                                                    # actions and the resources this action can be applied to are PVs, Services, and Pods
+
+kubectl create clusterrolebinding ROLE_BINDING_NAME --clusterrole=ROLE_NAME --serviceaccount=my-namespace:default   # Every Cluster Role needs a Cluster Role Binding
+                                                                                                                    # This will create a Cluster Role Binding for ROLE_NAME. It will also use the default service account in the my-namespace namespace.                                                                                                
+
+kubectl get clusterrole / kubectl get clusterrolebinding    # Lists the cluster roles/bindings
+
+
+
+
+-- k8-commands-for-secrets  --
+
+kubectl apply -f secrets.yml
+kubectl create secret generic mysecrets --from-literal="password=12345"
+kubectl get secrets
+
+
+
+
+
+--  Grab-JSON-Values-with-Kubectl --
+
+Node_Port=$(kubectl get svc nginx --output=jsonpath='{range .spec.ports[0]}{.nodePort}')    # This will parse your Node Port
+
+Pod_Name=$(kubectl get pod nginx -o jsonpath="{.items[0].metadata.name}")
+
+
+
+
+
+
+--  Common-k8-Errors ---
+1) CrashedLoopBackOff - Pod is in a constant state of flux, restarting upon failure. Could happen if restartPolicy=Always.
+                        This could be due to misssing dependencies, changes caused by recent updates, or deployment errors
+                        (Deployment Error - Could be an issue with the docker version , kubernetes componenet versions)
+                        (Updating your k8 cluster in a manner that isnt discrete can cause this)
+                        (Diversifying your cluster with different service accounts, secrets, variables, and mounts could also cause this error)
+
+
+2) ImagePullBackOff - This means a pod couldnt start becuase there was an error in your deployment and you couldnt pull the container image.
+    / ErrImagePull     The backoff part suggests k8 keeps trying. This can be resolved by editing the deployment and fixing the image
+
+
+3) ErrRunContainer  - misconfiguration of the deployment/pod
+
+4)CreateContainerConfigError - Most likely an error related to the assocaited ConfigMaps or secrets 
+
+5) ErrRegistryUnavailable - Issue connecting to container registry, could be an registry authentication error
+
+
+6) Deployment could fail if your pod requires more resources than requested, this can be checked by describing replicaset, and youll see
+    the error related to not having enough resources
+    - We can also have an issue with the quota limit for our resources, and might need to ask/request an increase of the quota
+    - Also can have an issue with PVC claims, or PV no mounting properly
+
+

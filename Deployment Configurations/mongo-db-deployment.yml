@@ -1,0 +1,30 @@
+apiVersion: apps/v1                         # API Version  
+kind: Deployment                            # Type of componenet [deployment, service, configMap, etc]
+metadata:                                   # Metadata of component 
+  name: mongo-db-deployment                 # Name of deployment
+  labels:                                   # deployment's labels
+    app: mongo-db 
+spec:                                       # Specifications of deployment
+  replicas: 2                               # Number of desired pods for this deployment
+  selector:                                 # Whom are the pods a part of this deployment
+    matchLabels:                            # Matches the selected label to the label of the pods
+      app: mongo-db 
+  template:                                 # Template of the deployment
+    metadata:                               # Template's Metadata
+      labels:                               # Labels of the pods that can be selected by deployments, services, etc
+        app: mongo-db                       # * Label of MondoDB pods * 
+    spec:                                   # Specifications of our deployment template
+      containers:
+      - name: mongo-db                      # Name of first container
+        image: mongodb:latest               # Image of container that will be deployed 
+        ports:                              # Ports of container
+        - containerPort: 27017              # * The port the container will be exposed on *
+        resources:                          # Resource specs of the pods
+          limits:                           # Limits of the resource specs (pods will not exceed these limits)
+            cpu: 200m
+            memory: 100Mi
+          requests:                         # Desired state of the resources for pods ; Pods will only be deployed to nodes
+            cpu: 100m                       # that are able to meet the request of the pod
+            memory: 50Mi
+
+

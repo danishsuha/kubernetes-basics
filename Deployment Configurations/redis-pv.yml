@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolume            # PersistentVolume is the kind of configuration
+metadata:
+  name: redis-pv
+spec:
+  storageClass: ""                # Right now we arent associating this PV with any Storage Classes
+  capacity:                       # The capacity of this PV, which is going to be 1Gi
+    storage: 1Gi
+  accessModes:                    # The access permissions of this PV, in this case its ReadWriteOnce
+  - ReadWriteOnce
+  hostPath:                       # Where on the host this PV will be mounted, in this care to /mnt/data
+    path: "/mnt/data"

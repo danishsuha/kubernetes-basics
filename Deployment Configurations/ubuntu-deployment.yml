@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-deployment
+  namespace: my-namespace               # Choose a specific namespace this deployment will belong to
+  labels:
+    os: ubuntu
+spec:
+  selector:
+    matchLabels:
+      os: ubuntu
+  template:
+    metadata:
+      labels:
+        os: ubuntu
+    spec:
+      containers:
+      - name: ubuntu
+        image: ubuntu:latest
+        resources:
+          limits:
+            cpu: 400m
+            memory: 800Mi
+          requests:
+            cpu: 200m
+            memory: 500Mi
+        ports:
+          - containerPort: 7777
+    restartPolicy: OnFailure
+          
