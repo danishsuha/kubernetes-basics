@@ -21,6 +21,10 @@ kubectl delete RESOURCE RESOURCE_NAME   # Will delete pod if you replace RESOURC
 kubectl log nginx-pod -n my-namespace   # This will show the logs of a pod that is either in CrashLoopback or Failed
 kubectl get all --all-namespace     # Shows all componenets
 kubectl get svc,po,deploy -n my-namespace   #This will show ur services, pods, and deployments in the my-namespace namespace
+kubectl cordon node1                # This will unschedule the node and wont allow any pods to be scheduled there
+kubectl uncordon node1              # This will allow the unscheduled node to now allow pods to be scheduled
+kubectl drain node --gracep-eriod=900    # This will drain the nodes of pods that arent associated to any daemonsets (in which case you would use --ignore-daemonsets)
+
 
 
 --  k8-commands-for-nodes  --

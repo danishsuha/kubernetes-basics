@@ -1,0 +1,17 @@
+ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)     # First create a base64 encoded key and set it as an env variable
+
+cat > encryption-config.yaml << EOF               # Create a EncryptionConfig file
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
+
+### Recommended to use KMS for Key Encryption 

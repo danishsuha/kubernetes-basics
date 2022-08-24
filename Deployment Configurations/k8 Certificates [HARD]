@@ -1,0 +1,323 @@
+---- CREATING A CERTIFICATE AUTHORITY -----
+
+{
+
+cat > ca-config.json << EOF                                                             # Creating a certificate authority file
+{
+  "signing": {
+    "default": {
+      "expiry": "8760h"                                                                 # Choosing an expiry for this CA
+    },
+    "profiles": {
+      "kubernetes": {
+        "usages": ["signing", "key encipherment", "server auth", "client auth"],        # Used to authentitcate client and master servers
+        "expiry": "8760h"
+      }
+    }
+  }
+}
+EOF
+
+cat > ca-csr.json << EOF                            # Creating a Certificate Signing Request
+{
+  "CN": "Kubernetes",
+  "key": {
+    "algo": "rsa",                                  # Specific algorithm / size
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",                                    
+      "L": "NYC",
+      "O": "Kubernetes",
+      "OU": "CA",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca          # Command to create your pub/private keys
+
+}
+
+
+
+
+
+
+----- CREATING AN ADMIN CERT -----
+
+{
+
+cat > admin-csr.json << EOF                     # Create an admin cert
+{
+  "CN": "admin",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NYC",
+      "O": "system:masters",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \                                         # Authenticating with Certificate Authority
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  admin-csr.json | cfssljson -bare admin                # Creating pub/private keys for admin
+
+}
+
+
+
+
+
+-----  CREATING KUBELET CLIENT CERT -----
+
+{
+cat > worker0.mylabserver.com-csr.json << EOF               # Creating Kubelet Client Cert for first node
+{
+  "CN": "system:node:worker0.mylabserver.com",              # includes domain name of node1
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NY",
+      "O": "system:nodes",                                  # Points to nodes
+      "OU": "Kubernetes The Hard Way",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \                                                                 #Authenticating with Certificate Authority
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname=172.34.1.0,worker0.mylabserver.com \
+  -profile=kubernetes \
+  worker0.mylabserver.com-csr.json | cfssljson -bare worker0.mylabserver.com    # Creating pub/priv keys for Kubelet Client
+
+cat > worker1.mylabserver.com-csr.json << EOF
+{
+  "CN": "system:node:worker1.mylabserver.com",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "Portland",
+      "O": "system:nodes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Oregon"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname=172.34.1.1,worker1.mylabserver.com \
+  -profile=kubernetes \
+  worker1.mylabserver.com-csr.json | cfssljson -bare worker1.mylabserver.com            # Same as above but for 2nd node
+
+}
+
+
+
+
+---- Create Cert for Controller-Manafer, Kube Proxy, and Scheduler ----
+
+{
+
+cat > kube-controller-manager-csr.json << EOF
+{
+  "CN": "system:kube-controller-manager",                           # Cert for Controller manager
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NYC",
+      "O": "system:kube-controller-manager",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager       # Creates pub/priv keys for controller manager
+
+}
+
+
+
+-----------------------------------------------------
+
+{
+
+cat > kube-proxy-csr.json << EOF
+{
+  "CN": "system:kube-proxy",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NYC",
+      "O": "system:node-proxier",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-proxy-csr.json | cfssljson -bare kube-proxy              # Creates pub/priv keys for Kube Proxy
+
+}
+
+
+----------------------------------------
+
+
+{
+
+cat > kube-scheduler-csr.json << EOF
+{
+  "CN": "system:kube-scheduler",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NYC",
+      "O": "system:kube-scheduler",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-scheduler-csr.json | cfssljson -bare kube-scheduler              # Creates pub/priv keys for Scheduler
+
+}
+
+
+
+
+
+
+---- CREATING CERT FOR API SERVER ----
+
+{
+
+cat > kubernetes-csr.json << EOF
+{
+  "CN": "kubernetes",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "Portland",
+      "O": "Kubernetes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Oregon"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname=10.32.0.1,172.34.0.0,controller0.mylabserver.com,172.34.0.1,controller1.mylabserver.com,172.34.2.0,kubernetes.mylabserver.com,127.0.0.1,localhost,kubernetes.default \
+  -profile=kubernetes \                                 
+  kubernetes-csr.json | cfssljson -bare kubernetes          # Here we have many hostname values, because we want to include all API Server associated IPs.
+                                                            # These IPs can be used for internal communications, any front end load balancers thats communicating directly
+}                                                           # with the API Server, the controller IPs, and the localhost in case of chances thats needed
+
+
+
+
+
+
+---- CREATING CERT FOR SERVICE ACCOUNT KEY PAIRS ----
+
+{
+
+cat > service-account-csr.json << EOF
+{
+  "CN": "service-accounts",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NYC",
+      "O": "Kubernetes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "NY"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  service-account-csr.json | cfssljson -bare service-account
+
+}
+# This is a certificate to sign Service Account tokens..  when Kubernetes provisions service accounts, its able to
+# generate tokens that can be used to authenticate with those service accounts.. It will use this cert key pair to sign those tokens
+
